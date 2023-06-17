@@ -5,6 +5,8 @@ import logging
 from telebot import types
 from typing import Optional, Union
 from containers import PartnerContainer, BflContainer, LeadContainer
+from db.orm import Session
+from db.models import StartRecord
 
 logger = logging.getLogger(__name__)
 
@@ -29,17 +31,25 @@ class Bot:
         self._client.register_message_handler(self.on_bfl_handler, commands=["bfl"])
         self._client.register_message_handler(self.on_lead_handler, commands=["lead"])
 
-    def on_text_handler(self, message: types.Message):
-        if not self._user:
-            self._user = message.from_user
-        logger.info(message)
-        self._client.reply_to(message=message, text=message.text)
+    @property
+    def user(self) -> types.User:
+        return self._user
+
+    def save_record(self):
+        with Session() as session:
+            record = StartRecord(
+                chat_id=self._user.id,
+                username=self._user.username,
+            )
+            session.add(record)
+            session.commit()
 
     def on_start_handler(self, message: types.Message):
         if not self._user:
             self._user = message.from_user
         logger.info("/START command")
         logger.debug(message)
+        self.save_record()
         self.send_reply_message(text=messages.START_COMMAND_HELLO)
         sleep = 5
         logger.debug(f"SLEEP {sleep}s")
@@ -51,6 +61,7 @@ class Bot:
             self._user = message.from_user
         logger.info("/PARTNER command")
         logger.debug(message)
+        self.save_record()
         partner_container = PartnerContainer(bot=self)
         partner_container.entry()
 
@@ -59,6 +70,7 @@ class Bot:
             self._user = message.from_user
         logger.info("/BFL command")
         logger.debug(message)
+        self.save_record()
         bfl_container = BflContainer(bot=self)
         bfl_container.entry()
 
