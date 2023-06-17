@@ -2,9 +2,11 @@ from __future__ import annotations
 import messages
 import logging
 from pprint import pformat
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from telebot import types
 from states import PartnerState
+from db.orm import Session
+from db.models import PartnerAnswer
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -76,6 +78,10 @@ class PartnerContainer:
         logger.debug("FINAL DATA")
         logger.debug(pformat(self.data))
         self.show_message(text=messages.PARTNER_FINAL)
+        with Session() as session:
+            answer = PartnerAnswer(**self.data, chat_id=self.bot.user.id)
+            session.add(answer)
+            session.commit()
         self.set_state(next_state=PartnerState.PARTNER_INIT_STATE)
 
     def show_message(self, text: str):
