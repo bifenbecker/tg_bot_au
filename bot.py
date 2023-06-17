@@ -4,7 +4,7 @@ import time
 import logging
 from telebot import types
 from typing import Optional, Union
-from containers import PartnerContainer
+from containers import PartnerContainer, BflContainer, LeadContainer
 
 logger = logging.getLogger(__name__)
 
@@ -19,12 +19,15 @@ class Bot:
 
         self._client.set_my_commands([
             telebot.types.BotCommand("/start", "start"),
-            telebot.types.BotCommand("/partner", "partner"),
+            telebot.types.BotCommand("/partner", "> Найти арбитражного управляющего для долгой работы"),
+            telebot.types.BotCommand("/bfl", "> Найти арбитражного управляющего для конкретного банкрота"),
+            telebot.types.BotCommand("/lead", "> Мне нужны Клиенты на банкротство!"),
         ])
 
         self._client.register_message_handler(self.on_start_handler, commands=["start"])
         self._client.register_message_handler(self.on_partner_handler, commands=["partner"])
-        # self._client.register_message_handler(self.on_text_handler, content_types=["text"])
+        self._client.register_message_handler(self.on_bfl_handler, commands=["bfl"])
+        self._client.register_message_handler(self.on_lead_handler, commands=["lead"])
 
     def on_text_handler(self, message: types.Message):
         if not self._user:
@@ -50,6 +53,22 @@ class Bot:
         logger.debug(message)
         partner_container = PartnerContainer(bot=self)
         partner_container.entry()
+
+    def on_bfl_handler(self, message: types.Message):
+        if not self._user:
+            self._user = message.from_user
+        logger.info("/BFL command")
+        logger.debug(message)
+        bfl_container = BflContainer(bot=self)
+        bfl_container.entry()
+
+    def on_lead_handler(self, message: types.Message):
+        if not self._user:
+            self._user = message.from_user
+        logger.info("/LEAD command")
+        logger.debug(message)
+        lead_container = LeadContainer(bot=self)
+        lead_container.entry()
 
     def send_message(self, to: Union[str, int], text: str, **kwargs):
         logger.debug(f"Send message - {text} to {to}")

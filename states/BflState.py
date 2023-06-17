@@ -1,0 +1,11 @@
+from enum import Enum
+
+
+class BflState(Enum):
+    BFL_INIT_STATE = 0
+    BFL_SET_REGION_NAME = 1
+    BFL_SET_INSOLVENT_SITUATION = 2
+    BFL_SET_AMOUNT_EXPENSE = 3
+    BFL_SET_GUARANTEES = 4
+    BFL_SET_EXPERIENCE = 5
+    BFL_SET_TELEPHONE = 6
