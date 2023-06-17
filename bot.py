@@ -1,9 +1,10 @@
 import telebot
 import messages
 import time
+import logging
 from telebot import types
 from typing import Optional, Union
-import logging
+from containers import PartnerContainer
 
 logger = logging.getLogger(__name__)
 
@@ -18,10 +19,12 @@ class Bot:
 
         self._client.set_my_commands([
             telebot.types.BotCommand("/start", "start"),
+            telebot.types.BotCommand("/partner", "partner"),
         ])
 
         self._client.register_message_handler(self.on_start_handler, commands=["start"])
-        self._client.register_message_handler(self.on_text_handler, content_types=["text"])
+        self._client.register_message_handler(self.on_partner_handler, commands=["partner"])
+        # self._client.register_message_handler(self.on_text_handler, content_types=["text"])
 
     def on_text_handler(self, message: types.Message):
         if not self._user:
@@ -40,16 +43,30 @@ class Bot:
         time.sleep(sleep)
         self.send_reply_message(text=messages.START_COMMAND_DESCRIPTION)
 
-    def send_message(self, to: Union[str, int], text: str):
-        logger.debug(f"Send message - {text} to {to}")
-        self._client.send_message(chat_id=to, text=text)
+    def on_partner_handler(self, message: types.Message):
+        if not self._user:
+            self._user = message.from_user
+        logger.info("/PARTNER command")
+        logger.debug(message)
+        partner_container = PartnerContainer(bot=self)
+        partner_container.entry()
 
-    def send_reply_message(self, text: str):
+    def send_message(self, to: Union[str, int], text: str, **kwargs):
+        logger.debug(f"Send message - {text} to {to}")
+        self._client.send_message(chat_id=to, text=text, parse_mode='Markdown', **kwargs)
+
+    def send_reply_message(self, text: str, **kwargs):
         if self._user:
-            self.send_message(to=self._user.id, text=text)
+            self.send_message(to=self._user.id, text=text, **kwargs)
         else:
             logger.error("No loaded user")
             raise Exception("No loaded user")
+
+    def register_message_handler(self, *args, **kwargs):
+        self._client.register_message_handler(*args, **kwargs)
+
+    def register_callback_handler(self, *args, **kwargs):
+        self._client.register_callback_query_handler(*args, **kwargs)
 
     def run(self):
         self._client.polling(none_stop=True)
