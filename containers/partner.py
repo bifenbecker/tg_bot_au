@@ -39,36 +39,36 @@ class PartnerContainer:
                                            func=lambda
                                                message: self.current_state.name == PartnerState.PARTNER_SET_EXPERIENCE.name)
 
-    def entry(self):
-        self.set_state(next_state=PartnerState.PARTNER_SET_REGION_NAME)
+    def entry(self, message: types.Message):
+        self.set_state(next_state=PartnerState.PARTNER_SET_REGION_NAME, chat_id=message.chat.id)
 
     def set_region_name_handler(self, message: types.Message):
         logger.debug(f"STATE - {PartnerState.PARTNER_SET_REGION_NAME.name}. Message - {message.text}")
         self.data.update({
             "region_name": message.text
         })
-        self.set_state(next_state=PartnerState.PARTNER_SET_AMOUNT_DEALS)
+        self.set_state(next_state=PartnerState.PARTNER_SET_AMOUNT_DEALS, chat_id=message.chat.id)
 
     def set_amount_deals_handler(self, callback: types.CallbackQuery):
         logger.debug(f"STATE - {PartnerState.PARTNER_SET_AMOUNT_DEALS.name}. Message - {callback.data}")
         self.data.update({
             "amount_deals": callback.data
         })
-        self.set_state(next_state=PartnerState.PARTNER_SET_AMOUNT_EXPENSE)
+        self.set_state(next_state=PartnerState.PARTNER_SET_AMOUNT_EXPENSE, chat_id=callback.message.chat.id)
 
     def set_amount_expense_handler(self, callback: types.CallbackQuery):
         logger.debug(f"STATE - {PartnerState.PARTNER_SET_AMOUNT_EXPENSE.name}. Message - {callback.data}")
         self.data.update({
             "amount_expense": callback.data
         })
-        self.set_state(next_state=PartnerState.PARTNER_SET_GUARANTEES)
+        self.set_state(next_state=PartnerState.PARTNER_SET_GUARANTEES, chat_id=callback.message.chat.id)
 
     def set_guarantees_handler(self, callback: types.CallbackQuery):
         logger.debug(f"STATE - {PartnerState.PARTNER_SET_GUARANTEES.name}. Message - {callback.data}")
         self.data.update({
             "guarantees": callback.data
         })
-        self.set_state(next_state=PartnerState.PARTNER_SET_EXPERIENCE)
+        self.set_state(next_state=PartnerState.PARTNER_SET_EXPERIENCE, chat_id=callback.message.chat.id)
 
     def set_experience_handler(self, callback: types.CallbackQuery):
         logger.debug(f"STATE - {PartnerState.PARTNER_SET_EXPERIENCE.name}. Message - {callback.data}")
@@ -77,7 +77,7 @@ class PartnerContainer:
         })
         logger.debug("FINAL DATA")
         logger.debug(pformat(self.data))
-        self.show_message(text=messages.PARTNER_FINAL)
+        self.show_message(text=messages.PARTNER_FINAL, to=callback.message.chat.id)
         try:
             with Session() as session:
                 answer = PartnerAnswer(**self.data, chat_id=self.bot.user.id)
@@ -85,12 +85,12 @@ class PartnerContainer:
                 session.commit()
         except Exception as e:
             logger.debug(e)
-        self.set_state(next_state=PartnerState.PARTNER_INIT_STATE)
+        self.set_state(next_state=PartnerState.PARTNER_INIT_STATE, chat_id=callback.message.chat.id)
 
-    def show_message(self, text: str):
-        self.bot.send_reply_message(text=text)
+    def show_message(self, text: str, to: int):
+        self.bot.send_message(text=text, to=to)
 
-    def set_state(self, next_state: PartnerState):
+    def set_state(self, next_state: PartnerState, chat_id: int):
         logger.debug(f"SET STATE - {next_state.name}")
         self.current_state = next_state
         if next_state != PartnerState.PARTNER_INIT_STATE:
@@ -128,8 +128,9 @@ class PartnerContainer:
                                                callback_data="От 50 до 200 завершенных дел"),
                     types.InlineKeyboardButton("От 200 до 1000 завершенных дел",
                                                callback_data="От 200 до 1000 завершенных дел"),
-                    types.InlineKeyboardButton("Более 1000 завершенных дел", callback_data="Более 1000 завершенных дел"),
+                    types.InlineKeyboardButton("Более 1000 завершенных дел",
+                                               callback_data="Более 1000 завершенных дел"),
                 ),
             }
-            self.bot.send_reply_message(text=state_messages[self.current_state.name],
-                                    reply_markup=state_keyboard[self.current_state.name])
+            self.bot.send_message(to=chat_id, text=state_messages[self.current_state.name],
+                                  reply_markup=state_keyboard[self.current_state.name])

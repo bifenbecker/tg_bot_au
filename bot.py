@@ -35,55 +35,49 @@ class Bot:
     def user(self) -> types.User:
         return self._user
 
-    def save_record(self):
+    def save_record(self, message: types.Message):
         try:
             with Session() as session:
                 record = StartRecord(
-                    chat_id=self._user.id,
-                    username=self._user.username,
+                    chat_id=message.chat.id,
+                    username=message.from_user.username,
                 )
                 session.add(record)
                 session.commit()
         except Exception as e:
-            logger.debug(e)
+            pass
+            # logger.debug(e)
 
+    # 892147531
     def on_start_handler(self, message: types.Message):
-        if not self._user:
-            self._user = message.from_user
         logger.info("/START command")
         logger.debug(message)
-        self.save_record()
-        self.send_reply_message(text=messages.START_COMMAND_HELLO)
+        self.save_record(message=message)
+        self.send_message(to=message.chat.id, text=messages.START_COMMAND_HELLO)
         sleep = 5
         logger.debug(f"SLEEP {sleep}s")
         time.sleep(sleep)
-        self.send_reply_message(text=messages.START_COMMAND_DESCRIPTION)
+        self.send_message(to=message.chat.id, text=messages.START_COMMAND_DESCRIPTION)
 
     def on_partner_handler(self, message: types.Message):
-        if not self._user:
-            self._user = message.from_user
         logger.info("/PARTNER command")
         logger.debug(message)
-        self.save_record()
+        self.save_record(message=message)
         partner_container = PartnerContainer(bot=self)
-        partner_container.entry()
+        partner_container.entry(message=message)
 
     def on_bfl_handler(self, message: types.Message):
-        if not self._user:
-            self._user = message.from_user
         logger.info("/BFL command")
         logger.debug(message)
-        self.save_record()
+        self.save_record(message=message)
         bfl_container = BflContainer(bot=self)
-        bfl_container.entry()
+        bfl_container.entry(message=message)
 
     def on_lead_handler(self, message: types.Message):
-        if not self._user:
-            self._user = message.from_user
         logger.info("/LEAD command")
         logger.debug(message)
         lead_container = LeadContainer(bot=self)
-        lead_container.entry()
+        lead_container.entry(message=message)
 
     def send_message(self, to: Union[str, int], text: str, **kwargs):
         logger.debug(f"Send message - {text} to {to}")

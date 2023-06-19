@@ -36,29 +36,29 @@ class LeadContainer:
                                            func=lambda
                                                message: self.current_state.name == LeadState.LEAD_SET_TELEPHONE.name)
 
-    def entry(self):
-        self.set_state(next_state=LeadState.LEAD_SET_REGION_NAME)
+    def entry(self, message: types.Message):
+        self.set_state(next_state=LeadState.LEAD_SET_REGION_NAME, chat_id=message.chat.id)
 
     def set_region_name_handler(self, message: types.Message):
         logger.debug(f"STATE - {LeadState.LEAD_SET_REGION_NAME.name}. Message - {message.text}")
         self.data.update({
             "region_name": message.text
         })
-        self.set_state(next_state=LeadState.LEAD_SET_BUSINESS_INFO)
+        self.set_state(next_state=LeadState.LEAD_SET_BUSINESS_INFO, chat_id=message.chat.id)
 
     def set_set_business_info_handler(self, callback: types.CallbackQuery):
         logger.debug(f"STATE - {LeadState.LEAD_SET_BUSINESS_INFO.name}. Message - {callback.data}")
         self.data.update({
             "business_info": callback.data
         })
-        self.set_state(next_state=LeadState.LEAD_SET_AMOUNT_CLIENTS)
+        self.set_state(next_state=LeadState.LEAD_SET_AMOUNT_CLIENTS, chat_id=callback.message.chat.id)
 
     def set_amount_clients_handler(self, callback: types.CallbackQuery):
         logger.debug(f"STATE - {LeadState.LEAD_SET_AMOUNT_CLIENTS.name}. Message - {callback.data}")
         self.data.update({
             "amount_clients": callback.data
         })
-        self.set_state(next_state=LeadState.LEAD_SET_TELEPHONE)
+        self.set_state(next_state=LeadState.LEAD_SET_TELEPHONE,chat_id=callback.message.chat.id)
 
     def set_telephone_handler(self, message: types.Message):
         logger.debug(f"STATE - {LeadState.LEAD_SET_TELEPHONE.name}. Message - {message.text}")
@@ -67,7 +67,7 @@ class LeadContainer:
         })
         logger.debug("FINAL DATA")
         logger.debug(pformat(self.data))
-        self.show_message(text=messages.LEAD_FINAL)
+        self.show_message(text=messages.LEAD_FINAL, to=message.chat.id)
         try:
             with Session() as session:
                 answer = LeadAnswer(**self.data, chat_id=self.bot.user.id)
@@ -75,12 +75,12 @@ class LeadContainer:
                 session.commit()
         except Exception as e:
             logger.debug(e)
-        self.set_state(next_state=LeadState.LEAD_INIT_STATE)
+        self.set_state(next_state=LeadState.LEAD_INIT_STATE, chat_id=message.chat.id)
 
-    def show_message(self, text: str):
-        self.bot.send_reply_message(text=text)
+    def show_message(self, text: str, to: int):
+        self.bot.send_message(text=text, to=to)
 
-    def set_state(self, next_state: LeadState):
+    def set_state(self, next_state: LeadState, chat_id: int):
         logger.debug(f"SET STATE - {next_state.name}")
         self.current_state = next_state
         if next_state != LeadState.LEAD_INIT_STATE:
@@ -108,5 +108,5 @@ class LeadContainer:
                 ),
                 LeadState.LEAD_SET_TELEPHONE.name: None
             }
-            self.bot.send_reply_message(text=state_messages[self.current_state.name],
+            self.bot.send_message(to=chat_id, text=state_messages[self.current_state.name],
                                     reply_markup=state_keyboard[self.current_state.name])
