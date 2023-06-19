@@ -36,13 +36,16 @@ class Bot:
         return self._user
 
     def save_record(self):
-        with Session() as session:
-            record = StartRecord(
-                chat_id=self._user.id,
-                username=self._user.username,
-            )
-            session.add(record)
-            session.commit()
+        try:
+            with Session() as session:
+                record = StartRecord(
+                    chat_id=self._user.id,
+                    username=self._user.username,
+                )
+                session.add(record)
+                session.commit()
+        except Exception as e:
+            logger.debug(e)
 
     def on_start_handler(self, message: types.Message):
         if not self._user:

@@ -88,10 +88,14 @@ class BflContainer:
         logger.debug("FINAL DATA")
         logger.debug(pformat(self.data))
         self.show_message(text=messages.PARTNER_FINAL)
-        with Session() as session:
-            answer = BflAnswer(**self.data, chat_id=self.bot.user.id)
-            session.add(answer)
-            session.commit()
+        try:
+            with Session() as session:
+                answer = BflAnswer(**self.data, chat_id=self.bot.user.id)
+                session.add(answer)
+                session.commit()
+        except Exception as e:
+            logger.debug(e)
+
         self.set_state(next_state=BflState.BFL_INIT_STATE)
 
     def show_message(self, text: str):
