@@ -25,19 +25,19 @@ class PartnerContainer:
         self.data = {}
         self.bot.register_message_handler(self.set_region_name_handler,
                                           func=lambda
-                                              message: self.current_state.name == PartnerState.PARTNER_SET_REGION_NAME.name)
+                                              message: self.bot.current_state.name == PartnerState.PARTNER_SET_REGION_NAME.name)
         self.bot.register_callback_handler(self.set_amount_deals_handler,
                                            func=lambda
-                                               message: self.current_state.name == PartnerState.PARTNER_SET_AMOUNT_DEALS.name)
+                                               message: self.bot.current_state.name == PartnerState.PARTNER_SET_AMOUNT_DEALS.name)
         self.bot.register_callback_handler(self.set_amount_expense_handler,
                                            func=lambda
-                                               message: self.current_state.name == PartnerState.PARTNER_SET_AMOUNT_EXPENSE.name)
+                                               message: self.bot.current_state.name == PartnerState.PARTNER_SET_AMOUNT_EXPENSE.name)
         self.bot.register_callback_handler(self.set_guarantees_handler,
                                            func=lambda
-                                               message: self.current_state.name == PartnerState.PARTNER_SET_GUARANTEES.name)
+                                               message: self.bot.current_state.name == PartnerState.PARTNER_SET_GUARANTEES.name)
         self.bot.register_callback_handler(self.set_experience_handler,
                                            func=lambda
-                                               message: self.current_state.name == PartnerState.PARTNER_SET_EXPERIENCE.name)
+                                               message: self.bot.current_state.name == PartnerState.PARTNER_SET_EXPERIENCE.name)
 
     def entry(self, message: types.Message):
         self.set_state(next_state=PartnerState.PARTNER_SET_REGION_NAME, chat_id=message.chat.id)
@@ -92,7 +92,7 @@ class PartnerContainer:
 
     def set_state(self, next_state: PartnerState, chat_id: int):
         logger.debug(f"SET STATE - {next_state.name}")
-        self.current_state = next_state
+        self.bot.current_state = next_state
         if next_state != PartnerState.PARTNER_INIT_STATE:
             state_messages = {
                 PartnerState.PARTNER_SET_REGION_NAME.name: messages.PARTNER_SET_REGION_NAME,
@@ -132,5 +132,5 @@ class PartnerContainer:
                                                callback_data="Более 1000 завершенных дел"),
                 ),
             }
-            self.bot.send_message(to=chat_id, text=state_messages[self.current_state.name],
-                                  reply_markup=state_keyboard[self.current_state.name])
+            self.bot.send_message(to=chat_id, text=state_messages[self.bot.current_state.name],
+                                  reply_markup=state_keyboard[self.bot.current_state.name])

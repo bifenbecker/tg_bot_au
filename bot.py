@@ -5,6 +5,7 @@ import logging
 from telebot import types
 from typing import Optional, Union
 from containers import PartnerContainer, BflContainer, LeadContainer
+from states import PartnerState, BflState, LeadState, MainState
 from db.orm import Session
 from db.models import StartRecord
 
@@ -18,6 +19,7 @@ class Bot:
     def __init__(self, token: str):
         self._client = telebot.TeleBot(token=token)
         self._user = None
+        self.current_state = MainState.START
 
         self._client.set_my_commands([
             telebot.types.BotCommand("/start", "start"),
@@ -30,6 +32,8 @@ class Bot:
         self._client.register_message_handler(self.on_partner_handler, commands=["partner"])
         self._client.register_message_handler(self.on_bfl_handler, commands=["bfl"])
         self._client.register_message_handler(self.on_lead_handler, commands=["lead"])
+        self._client.register_callback_query_handler(self.on_callback_handler, func=lambda
+            message: self.current_state.name == MainState.START.name)
 
     @property
     def user(self) -> types.User:
@@ -47,7 +51,17 @@ class Bot:
         except Exception as e:
             logger.error(e)
 
-    # 892147531
+    def on_callback_handler(self, callback: types.CallbackQuery):
+        command_type = callback.data
+        actions = {
+            "partner": self.on_partner_handler,
+            "bfl": self.on_bfl_handler,
+            "lead": self.on_lead_handler,
+        }
+        action = actions.get(command_type, None)
+        if action:
+            action(callback.message)
+
     def on_start_handler(self, message: types.Message):
         logger.info("/START command")
         logger.debug(message)
@@ -56,12 +70,24 @@ class Bot:
         sleep = 5
         logger.debug(f"SLEEP {sleep}s")
         time.sleep(sleep)
-        self.send_message(to=message.chat.id, text=messages.START_COMMAND_DESCRIPTION)
+        self.send_message(to=message.chat.id, text=messages.START_COMMAND_DESCRIPTION,
+                          reply_markup=types.InlineKeyboardMarkup().add(
+                              types.InlineKeyboardButton(
+                                  text="Найти арбитражного управляющего для долгой работы (/partner)",
+                                  callback_data="partner"),
+                              types.InlineKeyboardButton(
+                                  text="Найти арбитражного управляющего для конкретного банкрота (/bfl)",
+                                  callback_data="bfl"),
+                              types.InlineKeyboardButton(
+                                  text="Я сам АУ (или юрист) и мне нужны клиенты на бфл! (/lead)",
+                                  callback_data="lead"),
+                          ))
 
     def on_partner_handler(self, message: types.Message):
         logger.info("/PARTNER command")
         logger.debug(message)
         self.save_record(message=message)
+        self.current_state = PartnerState.PARTNER_INIT_STATE
         partner_container = PartnerContainer(bot=self)
         partner_container.entry(message=message)
 
@@ -69,12 +95,15 @@ class Bot:
         logger.info("/BFL command")
         logger.debug(message)
         self.save_record(message=message)
+        self.current_state = BflState.BFL_INIT_STATE
         bfl_container = BflContainer(bot=self)
         bfl_container.entry(message=message)
 
     def on_lead_handler(self, message: types.Message):
         logger.info("/LEAD command")
         logger.debug(message)
+        self.save_record(message=message)
+        self.current_state = LeadState.LEAD_INIT_STATE
         lead_container = LeadContainer(bot=self)
         lead_container.entry(message=message)
 
