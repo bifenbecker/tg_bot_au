@@ -70,7 +70,7 @@ class LeadContainer:
         self.show_message(text=messages.LEAD_FINAL, to=message.chat.id)
         try:
             with Session() as session:
-                answer = LeadAnswer(**self.data, chat_id=self.bot.user.id)
+                answer = LeadAnswer(**self.data, chat_id=message.chat.id)
                 session.add(answer)
                 session.commit()
         except Exception as e:

@@ -90,7 +90,7 @@ class BflContainer:
         self.show_message(text=messages.PARTNER_FINAL, to=message.chat.id)
         try:
             with Session() as session:
-                answer = BflAnswer(**self.data, chat_id=self.bot.user.id)
+                answer = BflAnswer(**self.data, chat_id=message.chat.id)
                 session.add(answer)
                 session.commit()
         except Exception as e:
