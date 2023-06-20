@@ -45,8 +45,7 @@ class Bot:
                 session.add(record)
                 session.commit()
         except Exception as e:
-            pass
-            # logger.debug(e)
+            logger.error(e)
 
     # 892147531
     def on_start_handler(self, message: types.Message):

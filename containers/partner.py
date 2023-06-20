@@ -84,7 +84,7 @@ class PartnerContainer:
                 session.add(answer)
                 session.commit()
         except Exception as e:
-            logger.debug(e)
+            logger.error(e)
         self.set_state(next_state=PartnerState.PARTNER_INIT_STATE, chat_id=callback.message.chat.id)
 
     def show_message(self, text: str, to: int):

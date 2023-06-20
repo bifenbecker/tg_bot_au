@@ -94,7 +94,7 @@ class BflContainer:
                 session.add(answer)
                 session.commit()
         except Exception as e:
-            logger.debug(e)
+            logger.error(e)
 
         self.set_state(next_state=BflState.BFL_INIT_STATE, chat_id=message.chat.id)
 
