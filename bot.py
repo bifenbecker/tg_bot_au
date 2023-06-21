@@ -7,7 +7,7 @@ from typing import Optional, Union
 from containers import PartnerContainer, BflContainer, LeadContainer
 from states import PartnerState, BflState, LeadState, MainState
 from db.orm import Session
-from db.models import StartRecord
+from db.models import StartRecord, User
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,13 @@ class Bot:
     def save_record(self, message: types.Message):
         try:
             with Session() as session:
+                user = session.query(User).filter(User.telegram_id == message.chat.id).one_or_none()
+                if not user:
+                    user = User(
+                        telegram_id=message.chat.id,
+                        username=message.from_user.username
+                    )
+                    session.add(user)
                 record = StartRecord(
                     chat_id=message.chat.id,
                     username=message.from_user.username,

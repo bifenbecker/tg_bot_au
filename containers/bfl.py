@@ -138,9 +138,11 @@ class BflContainer:
                                                callback_data="От 50 до 200 завершенных дел"),
                     types.InlineKeyboardButton("От 200 до 1000 завершенных дел",
                                                callback_data="От 200 до 1000 завершенных дел"),
-                    types.InlineKeyboardButton("Более 1000 завершенных дел", callback_data="Более 1000 завершенных дел"),
+                    types.InlineKeyboardButton("Более 1000 завершенных дел",
+                                               callback_data="Более 1000 завершенных дел"),
                 ),
-                BflState.BFL_SET_TELEPHONE.name: types.ReplyKeyboardMarkup(resize_keyboard=True).add(types.KeyboardButton(text="send_contact", request_contact=True)),
+                BflState.BFL_SET_TELEPHONE.name: types.ReplyKeyboardMarkup(resize_keyboard=True).add(
+                    types.KeyboardButton(text=messages.SHARE_TELEPHONE, request_contact=True)),
             }
             self.bot.send_message(to=chat_id, text=state_messages[self.bot.current_state.name],
-                                    reply_markup=state_keyboard[self.bot.current_state.name])
+                                  reply_markup=state_keyboard[self.bot.current_state.name])

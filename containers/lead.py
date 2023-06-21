@@ -114,7 +114,8 @@ class LeadContainer:
                     types.InlineKeyboardButton("До 50", callback_data="До 50"),
                     types.InlineKeyboardButton("От 50", callback_data="От 5"),
                 ),
-                LeadState.LEAD_SET_TELEPHONE.name: types.ReplyKeyboardMarkup(resize_keyboard=True).add(types.KeyboardButton(text="send_contact", request_contact=True))
+                LeadState.LEAD_SET_TELEPHONE.name: types.ReplyKeyboardMarkup(resize_keyboard=True).add(
+                    types.KeyboardButton(text=messages.SHARE_TELEPHONE, request_contact=True))
             }
             self.bot.send_message(to=chat_id, text=state_messages[self.bot.current_state.name],
                                   reply_markup=state_keyboard[self.bot.current_state.name])
