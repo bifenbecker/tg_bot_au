@@ -59,11 +59,7 @@ def process():
                                              text="Я сам АУ (или юрист) и мне нужны клиенты на бфл! (/lead)",
                                              callback_data="lead"),
                                      ))
-                    record = StartRecord(
-                        chat_id=user.telegram_id,
-                        username=user.username,
-                    )
-                    session.add(record)
+                    user.last_notify = datetime.now()
                     session.commit()
         sleep(60)
 
