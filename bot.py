@@ -67,7 +67,7 @@ class Bot:
         }
         action = actions.get(command_type, None)
         if action:
-            action(callback.message)
+            action(message=callback.message)
 
     def on_start_handler(self, message: types.Message):
         logger.info("/START command")
@@ -77,6 +77,7 @@ class Bot:
         sleep = 5
         logger.debug(f"SLEEP {sleep}s")
         time.sleep(sleep)
+        self.current_state = MainState.START
         self.send_message(to=message.chat.id, text=messages.START_COMMAND_DESCRIPTION,
                           reply_markup=types.InlineKeyboardMarkup().add(
                               types.InlineKeyboardButton(
