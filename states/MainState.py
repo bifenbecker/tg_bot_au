@@ -2,4 +2,5 @@ from enum import Enum
 
 
 class MainState(Enum):
-    START = 0
+    INIT = 0
+    START = 1

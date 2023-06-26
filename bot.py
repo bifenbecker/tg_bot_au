@@ -19,7 +19,7 @@ class Bot:
     def __init__(self, token: str):
         self._client = telebot.TeleBot(token=token)
         self._user = None
-        self.current_state = MainState.START
+        self.current_state = MainState.INIT
 
         self._client.set_my_commands([
             telebot.types.BotCommand("/start", "start"),
@@ -28,10 +28,10 @@ class Bot:
             telebot.types.BotCommand("/lead", "> Мне нужны Клиенты на банкротство!"),
         ])
 
-        self._client.register_message_handler(self.on_start_handler, commands=["start"])
-        self._client.register_message_handler(self.on_partner_handler, commands=["partner"])
-        self._client.register_message_handler(self.on_bfl_handler, commands=["bfl"])
-        self._client.register_message_handler(self.on_lead_handler, commands=["lead"])
+        self._client.register_message_handler(self.on_start_handler, func=lambda message: self.current_state.name != MainState.START.name, commands=["start"])
+        self._client.register_message_handler(self.on_partner_handler, func=lambda message: self.current_state.name != MainState.START.name, commands=["partner"])
+        self._client.register_message_handler(self.on_bfl_handler, func=lambda message: self.current_state.name != MainState.START.name, commands=["bfl"])
+        self._client.register_message_handler(self.on_lead_handler, func=lambda message: self.current_state.name != MainState.START.name, commands=["lead"])
         self._client.register_callback_query_handler(self.on_callback_handler, func=lambda
             message: self.current_state.name == MainState.START.name)
 
@@ -72,12 +72,12 @@ class Bot:
     def on_start_handler(self, message: types.Message):
         logger.info("/START command")
         logger.debug(message)
+        self.current_state = MainState.START
         self.save_record(message=message)
         self.send_message(to=message.chat.id, text=messages.START_COMMAND_HELLO)
         sleep = 5
         logger.debug(f"SLEEP {sleep}s")
         time.sleep(sleep)
-        self.current_state = MainState.START
         self.send_message(to=message.chat.id, text=messages.START_COMMAND_DESCRIPTION,
                           reply_markup=types.InlineKeyboardMarkup().add(
                               types.InlineKeyboardButton(
@@ -90,6 +90,7 @@ class Bot:
                                   text="Я сам АУ (или юрист) и мне нужны клиенты на бфл! (/lead)",
                                   callback_data="lead"),
                           ))
+        self.current_state = MainState.INIT
 
     def on_partner_handler(self, message: types.Message):
         logger.info("/PARTNER command")
