@@ -13,5 +13,6 @@ class PartnerAnswer(Base):
     amount_expense = sa.Column(sa.String)
     guarantees = sa.Column(sa.String)
     experience = sa.Column(sa.String)
+    telephone = sa.Column(sa.String)
     created_at = sa.Column(sa.DateTime(timezone=True),
                            default=datetime.utcnow)

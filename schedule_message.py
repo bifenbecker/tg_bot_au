@@ -23,7 +23,7 @@ def process():
                     (last_record.start_time + timedelta(days=1)).timestamp()) < int(
                     datetime.utcnow().timestamp())
                 is_must_send_notification_per_one_month = int(
-                    (last_record.start_time + timedelta(days=30)).timestamp()) < int(
+                    (user.last_notify + timedelta(days=30)).timestamp()) < int(
                     datetime.utcnow().timestamp())
                 if is_must_send_notification_per_one_day:
                     bot.send_message(parse_mode='Markdown', chat_id=user.telegram_id,

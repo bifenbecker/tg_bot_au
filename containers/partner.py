@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from telebot import types
 from states import PartnerState
 from db.orm import Session
-from db.models import PartnerAnswer
+from db.models import PartnerAnswer, User
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -38,6 +38,9 @@ class PartnerContainer:
         self.bot.register_callback_handler(self.set_experience_handler,
                                            func=lambda
                                                message: self.bot.current_state.name == PartnerState.PARTNER_SET_EXPERIENCE.name)
+        self.bot.register_message_handler(self.set_telephone_handler,
+                                          func=lambda
+                                              message: self.bot.current_state.name == PartnerState.PARTNER_SET_TELEPHONE.name)
 
     def entry(self, message: types.Message):
         self.set_state(next_state=PartnerState.PARTNER_SET_REGION_NAME, chat_id=message.chat.id)
@@ -75,17 +78,27 @@ class PartnerContainer:
         self.data.update({
             "experience": callback.data
         })
+        self.set_state(next_state=PartnerState.PARTNER_SET_TELEPHONE, chat_id=callback.message.chat.id)
+
+    def set_telephone_handler(self, message: types.Message):
+        logger.debug(f"STATE - {PartnerState.PARTNER_SET_EXPERIENCE.name}. Message - {message.text}")
+        self.data.update({
+            "telephone": message.contact.phone_number
+        })
         logger.debug("FINAL DATA")
         logger.debug(pformat(self.data))
-        self.show_message(text=messages.PARTNER_FINAL, to=callback.message.chat.id)
+        self.show_message(text=messages.PARTNER_FINAL, to=message.chat.id)
         try:
             with Session() as session:
-                answer = PartnerAnswer(**self.data, chat_id=callback.message.chat.id)
+                answer = PartnerAnswer(**self.data, chat_id=message.chat.id)
+                session.query(User).filter(User.telegram_id == message.chat.id).update({
+                    "telephone": self.data["telephone"]
+                })
                 session.add(answer)
                 session.commit()
         except Exception as e:
             logger.error(e)
-        self.set_state(next_state=PartnerState.PARTNER_INIT_STATE, chat_id=callback.message.chat.id)
+        self.set_state(next_state=PartnerState.PARTNER_INIT_STATE, chat_id=message.chat.id)
 
     def show_message(self, text: str, to: int):
         self.bot.send_message(text=text, to=to)
@@ -100,6 +113,7 @@ class PartnerContainer:
                 PartnerState.PARTNER_SET_AMOUNT_EXPENSE.name: messages.PARTNER_SET_AMOUNT_EXPENSE,
                 PartnerState.PARTNER_SET_GUARANTEES.name: messages.PARTNER_SET_GUARANTEES,
                 PartnerState.PARTNER_SET_EXPERIENCE.name: messages.PARTNER_SET_EXPERIENCE,
+                PartnerState.PARTNER_SET_TELEPHONE.name: messages.BFL_SET_TELEPHONE
             }
             state_keyboard = {
                 PartnerState.PARTNER_SET_REGION_NAME.name: None,
@@ -131,6 +145,8 @@ class PartnerContainer:
                     types.InlineKeyboardButton("Более 1000 завершенных дел",
                                                callback_data="Более 1000 завершенных дел"),
                 ),
+                PartnerState.PARTNER_SET_TELEPHONE.name: types.ReplyKeyboardMarkup(resize_keyboard=True).add(
+                    types.KeyboardButton(text=messages.SHARE_TELEPHONE, request_contact=True)),
             }
             self.bot.send_message(to=chat_id, text=state_messages[self.bot.current_state.name],
                                   reply_markup=state_keyboard[self.bot.current_state.name])

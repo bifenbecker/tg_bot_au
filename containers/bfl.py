@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from telebot import types
 from states import BflState
 from db.orm import Session
-from db.models import BflAnswer
+from db.models import BflAnswer, User
 
 if TYPE_CHECKING:
     from bot import Bot
@@ -93,6 +93,9 @@ class BflContainer:
             try:
                 with Session() as session:
                     answer = BflAnswer(**self.data, chat_id=message.chat.id)
+                    session.query(User).filter(User.telegram_id == message.chat.id).update({
+                        "telephone": self.data["telephone"]
+                    })
                     session.add(answer)
                     session.commit()
             except Exception as e:

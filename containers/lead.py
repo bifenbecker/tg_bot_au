@@ -6,7 +6,7 @@ from pprint import pformat
 from typing import TYPE_CHECKING
 from telebot import types
 from states import LeadState
-from db.models import LeadAnswer
+from db.models import LeadAnswer, User
 from db.orm import Session
 
 if TYPE_CHECKING:
@@ -75,6 +75,9 @@ class LeadContainer:
             try:
                 with Session() as session:
                     answer = LeadAnswer(**self.data, chat_id=message.chat.id)
+                    session.query(User).filter(User.telegram_id == message.chat.id).update({
+                        "telephone": self.data["telephone"]
+                    })
                     session.add(answer)
                     session.commit()
             except Exception as e:
